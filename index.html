@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1d1b19">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<title>Stylelink Install Test</title>
+<style>
+:root{--bg:#faf8f5;--fg:#1d1b19;--card:#fff;--mut:#6b655e;--ok:#1a7f3c;--bad:#b3261e;--warn:#9a6700;--line:#e4ded6;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root{--bg:#161412;--fg:#f1ede8;--card:#211e1b;--mut:#a39b92;--ok:#5fd07f;--bad:#ff8a80;--warn:#e3b341;--line:#3a352f}}
+html,body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:560px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:4px 0 2px}
+p.s{color:var(--mut);margin:0 0 14px;font-size:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:10px 0}
+.row{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--line);font-size:15px}
+.row:last-child{border-bottom:0}
+.v{font-weight:600;text-align:right}
+.ok{color:var(--ok)}.bad{color:var(--bad)}.warn{color:var(--warn)}
+button,a.btn{display:inline-block;background:var(--fg);color:var(--bg);border:0;border-radius:10px;padding:12px 16px;font:inherit;font-weight:600;margin:4px 6px 4px 0;text-decoration:none}
+button.sec,a.sec{background:transparent;color:var(--fg);border:1px solid var(--line)}
+button[hidden]{display:none}
+ol{padding-left:20px;margin:6px 0}li{margin:4px 0}
+pre{white-space:pre-wrap;word-break:break-word;font-size:13px;margin:8px 0 0}
+</style>
+</head>
+<body>
+<main>
+<h1>Stylelink install test</h1>
+<p class="s">Diagnostic only. Fake data only. Nothing leaves this phone.</p>
+
+<div class="card">
+<b>Steps</b>
+<ol>
+<li>Open this page in Chrome on Android (online). Wait for "Page controlled by SW: YES" (reload once if needed).</li>
+<li>Tap <b>Add test order</b> twice.</li>
+<li>Tap <b>Install app</b> (or Chrome menu ⋮ → Install app / Add to Home screen).</li>
+<li>Open from the home-screen icon. Check <b>Standalone: YES</b>.</li>
+<li>Turn on <b>airplane mode</b>. Fully close the app. Reopen from the icon.</li>
+<li>"Data survived reopen" must now say <b>PASS</b>. Then add a third order while offline.</li>
+<li>Tap <b>Copy results</b> and paste them to me.</li>
+</ol>
+</div>
+
+<div class="card" id="checks"></div>
+<p class="s">Note: if you added orders earlier and now see FIRST OPEN, treat it as FAIL. It means the phone wiped this app's storage, including the record of what was saved.</p>
+
+<div class="card">
+<b>Test orders</b>
+<div style="margin-top:8px">
+<button id="add">Add test order</button>
+<button id="install" class="sec" hidden>Install app</button>
+<button id="clear" class="sec">Clear</button>
+<a class="btn sec" href="https://wa.me/2340000000000?text=Stylelink%20test" target="_blank" rel="noopener">WhatsApp link</a>
+</div>
+<div id="orders" style="margin-top:8px;font-size:14px"></div>
+</div>
+
+<div class="card"><button id="copy" class="sec">Copy results</button><pre id="out"></pre></div>
+</main>
+
+<script>
+(function(){
+  var R = {};
+  var ORDER = ['Secure context (HTTPS)','Framed in another page','Manifest loads','Service worker registered','Page controlled by SW','App shell cached','Install prompt offered','Standalone display','IndexedDB works','Persistent storage','Data survived reopen','Recorded for next reopen','Orders saved while offline','Network'];
+  var checksEl=document.getElementById('checks'), outEl=document.getElementById('out');
+  function show(){
+    checksEl.textContent='';
+    ORDER.forEach(function(k){
+      var r=R[k]||{t:'…',c:''}, d=document.createElement('div'); d.className='row';
+      var a=document.createElement('span'); a.textContent=k;
+      var b=document.createElement('span'); b.className='v '+r.c; b.textContent=r.t;
+      d.appendChild(a); d.appendChild(b); checksEl.appendChild(d);
+    });
+    outEl.textContent=ORDER.map(function(k){return k+': '+((R[k]||{}).t||'…');}).join('\n');
+  }
+  function set(k,t,c){R[k]={t:t,c:c||''};show();}
+
+  set('Secure context (HTTPS)', window.isSecureContext?'YES':'NO', window.isSecureContext?'ok':'bad');
+  try{var fr=window.top!==window.self; set('Framed in another page',fr?'YES':'No',fr?'bad':'ok');}catch(e){set('Framed in another page','YES (blocked)','bad');}
+  var sa=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;
+  set('Standalone display', sa?'YES':'No (open from the home-screen icon)', sa?'ok':'warn');
+
+  fetch('manifest.webmanifest',{cache:'no-store'}).then(function(r){return r.ok?r.json():Promise.reject();}).then(function(m){
+    set('Manifest loads','YES ('+(m.display||'?')+')','ok');
+  }).catch(function(){set('Manifest loads','FAILED (or offline, served from cache)','warn');});
+
+  function ctrl(){ set('Page controlled by SW', navigator.serviceWorker&&navigator.serviceWorker.controller?'YES':'Not yet (reload once)', navigator.serviceWorker&&navigator.serviceWorker.controller?'ok':'warn'); }
+  function cached(){
+    if(!('caches' in window)){set('App shell cached','No Cache API','bad');return;}
+    caches.match('./index.html').then(function(r){set('App shell cached', r?'YES':'No', r?'ok':'warn');}).catch(function(){set('App shell cached','Error','bad');});
+  }
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('sw.js',{scope:'./'}).then(function(){
+      set('Service worker registered','YES','ok'); ctrl(); setTimeout(function(){ctrl();cached();},1500);
+    }).catch(function(e){ set('Service worker registered','FAILED: '+(e&&e.name||'error'),'bad'); });
+    navigator.serviceWorker.addEventListener('controllerchange',function(){ctrl();cached();});
+    ctrl();
+  } else { set('Service worker registered','Not supported','bad'); }
+  cached();
+
+  var deferred=null, ib=document.getElementById('install');
+  window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferred=e;ib.hidden=false;set('Install prompt offered','YES','ok');});
+  window.addEventListener('appinstalled',function(){set('Install prompt offered','Installed','ok');ib.hidden=true;});
+  ib.onclick=function(){ if(deferred){deferred.prompt();deferred=null;} };
+  if(sa) set('Install prompt offered','Already installed','ok'); else set('Install prompt offered','Not offered (yet)','warn');
+
+  var db;
+  function open(){return new Promise(function(res,rej){var q=indexedDB.open('sl-pwa-test',1);q.onupgradeneeded=function(){q.result.createObjectStore('orders',{keyPath:'id',autoIncrement:true});q.result.createObjectStore('meta');};q.onsuccess=function(){res(q.result)};q.onerror=function(){rej(q.error)};});}
+  function all(){return new Promise(function(res,rej){var r=db.transaction('orders').objectStore('orders').getAll();r.onsuccess=function(){res(r.result)};r.onerror=function(){rej(r.error)};});}
+  function add(v){return new Promise(function(res,rej){var t=db.transaction('orders','readwrite');var rq=t.objectStore('orders').add(v);t.oncomplete=function(){res(rq.result)};t.onerror=function(){rej(t.error)};});}
+  function wipe(){return new Promise(function(res,rej){var t=db.transaction(['orders','meta'],'readwrite');t.objectStore('orders').clear();t.objectStore('meta').clear();t.oncomplete=res;t.onerror=function(){rej(t.error)};});}
+  function mget(k){return new Promise(function(res){var r=db.transaction('meta').objectStore('meta').get(k);r.onsuccess=function(){res(r.result)};r.onerror=function(){res(undefined)};});}
+  function mset(k,v){return new Promise(function(res){var t=db.transaction('meta','readwrite');t.objectStore('meta').put(v,k);t.oncomplete=res;t.onerror=res;});}
+  function verdict(expected, presentIds){
+    if(!expected.length) return {s:'FIRST OPEN',t:'FIRST OPEN: no previous test orders recorded yet',c:'warn'};
+    var missing=expected.filter(function(id){return presentIds.indexOf(id)===-1;});
+    if(!missing.length) return {s:'PASS',t:'PASS: '+expected.length+' of '+expected.length+' previous test orders survived (IDs '+expected.join(', ')+')',c:'ok'};
+    return {s:'FAIL',t:'FAIL: '+missing.length+' of '+expected.length+' previous test orders missing (IDs '+missing.join(', ')+')',c:'bad'};
+  }
+  function readLS(){try{var v=JSON.parse(localStorage.getItem('sl-expected')||'[]');return Array.isArray(v)?v:[];}catch(e){return [];}}
+  function unionIds(a,b){var o=a.slice();b.forEach(function(x){if(o.indexOf(x)===-1)o.push(x);});return o.sort(function(x,y){return x-y;});}
+  function showRecorded(ids){set('Recorded for next reopen', ids.length?ids.length+' orders (IDs '+ids.join(', ')+')':'nothing yet', ids.length?'ok':'warn');}
+  async function record(){
+    var ids=(await all()).map(function(o){return o.id;});
+    try{localStorage.setItem('sl-expected',JSON.stringify(ids));}catch(e){}
+    await mset('expected',ids);
+    showRecorded(ids);
+  }
+  async function render(){
+    var l=await all(), el=document.getElementById('orders'); el.textContent='';
+    if(!l.length){el.textContent='No test orders yet.';}
+    l.forEach(function(o){var d=document.createElement('div');d.textContent='#'+o.id+' · '+o.customer+' · ₦'+o.price+' · '+o.at+(o.online?'':' · saved OFFLINE');el.appendChild(d);});
+    var off=l.filter(function(o){return !o.online;}).length;
+    set('Orders saved while offline', off?String(off):'0 so far', off?'ok':'warn');
+    return l.length;
+  }
+  (async function(){
+    try{
+      db=await open(); set('IndexedDB works','YES','ok');
+      var presentIds=(await all()).map(function(o){return o.id;});
+      var expected=unionIds(readLS(), (await mget('expected'))||[]);
+      var v=verdict(expected,presentIds);
+      set('Data survived reopen',v.t,v.c);
+      showRecorded(expected);
+      await render();
+    }catch(e){set('IndexedDB works','FAILED','bad');set('Data survived reopen','Cannot test','bad');}
+    try{
+      if(navigator.storage&&navigator.storage.persist){var p=await navigator.storage.persisted(); if(!p)p=await navigator.storage.persist(); set('Persistent storage',p?'YES':'Not granted',p?'ok':'warn');}
+      else set('Persistent storage','Not supported','warn');
+    }catch(e){set('Persistent storage','Error','warn');}
+  })();
+
+  var names=['Test Customer A','Test Customer B','Test Customer C'];
+  document.getElementById('add').onclick=async function(){
+    if(!db)return;
+    await add({customer:names[Math.floor(Math.random()*3)],price:(Math.floor(Math.random()*40)+10)*1000,at:new Date().toLocaleTimeString(),online:navigator.onLine});
+    await record(); await render();
+  };
+  document.getElementById('clear').onclick=async function(){if(db){await wipe();await record();await render();set('Data survived reopen','Cleared: start a new run (add orders, then reopen)','warn');}};
+
+  function net(){set('Network',navigator.onLine?'Online':'OFFLINE',navigator.onLine?'warn':'ok');}
+  window.addEventListener('online',net);window.addEventListener('offline',net);net();
+
+  document.getElementById('copy').onclick=function(){
+    var t=outEl.textContent;
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).catch(function(){});}
+    var r=document.createRange();r.selectNodeContents(outEl);var s=getSelection();s.removeAllRanges();s.addRange(r);
+  };
+  show();
+})();
+</script>
+</body>
+</html>
