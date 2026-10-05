@@ -1,9 +1,8 @@
-import { openDb, run, req, dumpTx, deleteDb, MIGRATIONS, DATA_STORES, SchemaTooNewError } from '../js/db.js';
-import * as C from '../js/commands.js';
-import * as R from '../js/repo.js';
-import * as D from '../js/domain.js';
-import * as B from '../js/backup.js';
-
+import { openDb, run, req, dumpTx, deleteDb, MIGRATIONS, DATA_STORES, SchemaTooNewError } from './db.js';
+import * as C from './commands.js';
+import * as R from './repo.js';
+import * as D from './domain.js';
+import * as B from './backup.js';
 const tests = [];
 const test = (name, fn) => tests.push({ name, fn });
 const names = [];
