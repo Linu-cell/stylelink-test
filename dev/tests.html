@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stylelink Orders: Step 1 tests</title>
+<style>
+:root{--bg:#faf8f5;--fg:#1d1b19;--card:#fff;--mut:#6b655e;--ok:#1a7f3c;--bad:#b3261e;--line:#e4ded6}
+@media (prefers-color-scheme:dark){:root{--bg:#161412;--fg:#f1ede8;--card:#211e1b;--mut:#a39b92;--ok:#5fd07f;--bad:#ff8a80;--line:#3a352f}}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.4 system-ui,sans-serif}
+main{max-width:640px;margin:0 auto;padding:14px}
+h1{font-size:19px;margin:4px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:8px 0}
+.pass{color:var(--ok);font-weight:700}.fail{color:var(--bad);font-weight:700}
+.ev{color:var(--mut);font-size:13px;margin:2px 0 0 12px;word-break:break-word}
+button{background:var(--fg);color:var(--bg);border:0;border-radius:8px;padding:10px 14px;font:inherit;font-weight:600}
+pre{white-space:pre-wrap;font-size:12px}
+</style></head>
+<body><main>
+<h1>Step 1 tests: data layer, domain, backup core</h1>
+<div id="sum" class="card">Running…</div>
+<div id="list"></div>
+<button id="copy">Copy results</button>
+<pre id="out"></pre>
+</main>
+<script type="module" src="tests.js"></script>
+</body></html>
