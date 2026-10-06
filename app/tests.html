@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stylelink Orders: Step 1 tests</title>
+<style>
+:root{--bg:#faf8f5;--fg:#1d1b19;--card:#fff;--mut:#6b655e;--ok:#1a7f3c;--bad:#b3261e;--line:#e4ded6}
+@media (prefers-color-scheme:dark){:root{--bg:#161412;--fg:#f1ede8;--card:#211e1b;--mut:#a39b92;--ok:#5fd07f;--bad:#ff8a80;--line:#3a352f}}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.4 system-ui,sans-serif}
+main{max-width:640px;margin:0 auto;padding:14px}
+h1{font-size:19px;margin:4px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:8px 0}
+.pass{color:var(--ok);font-weight:700}.fail{color:var(--bad);font-weight:700}
+.ev{color:var(--mut);font-size:13px;margin:2px 0 0 12px;word-break:break-word}
+.f{font-size:13px;word-break:break-all}
+button{background:var(--fg);color:var(--bg);border:0;border-radius:8px;padding:10px 14px;font:inherit;font-weight:600}
+pre{white-space:pre-wrap;font-size:12px}
+</style></head>
+<body><main>
+<h1>Step 1 tests: data layer, domain, backup core</h1>
+<div class="ev" id="ver">Step 1 regression suite (runs in the app folder)</div>
+<div id="sum" class="card">Checking files…</div>
+<div id="files" class="card"></div>
+<div id="list"></div>
+<button id="copy">Copy results</button>
+<pre id="out"></pre>
+</main>
+<!-- Classic (non-module) script: it still runs and reports even if a module file is missing. -->
+<script>
+(async function () {
+  var sum = document.getElementById('sum'), filesEl = document.getElementById('files');
+  function fail(msg) { sum.innerHTML = '<b class="fail">Tests could not run</b><div class="ev">' + String(msg).replace(/</g, '&lt;') + '</div>'; }
+  window.addEventListener('error', function (e) { fail('Error: ' + e.message); });
+  window.addEventListener('unhandledrejection', function (e) { fail('Error: ' + (e.reason && e.reason.message || e.reason)); });
+  var HOME = 'https://linu-cell.github.io/stylelink-test/app/tests.html?v=1';
+  var where = String(location.href);
+  var addr = document.createElement('div'); addr.className = 'ev'; addr.textContent = 'Page address: ' + where.slice(0, 90);
+  sum.parentNode.insertBefore(addr, sum);
+  if (!/^https?:$/.test(location.protocol)) {
+    fail('This page was opened from "' + where.slice(0, 60) + '", not from the website. Open ' + HOME + ' by typing it into Chrome\'s address bar (not from Files, Downloads or a preview).');
+    return;
+  }
+  var need = ['./version.js', './db.js', './repo.js', './domain.js', './commands.js', './backup.js', './tests.js'];
+  var missing = [];
+  filesEl.innerHTML = '<b>Required files</b>';
+  for (var i = 0; i < need.length; i++) {
+    var url = need[i], ok = false, status = 'no response';
+    try { url = new URL(need[i], location.href).href; } catch (e) { url = need[i]; }
+    try { var r = await fetch(url, { cache: 'no-store' }); ok = r.ok; status = r.status; } catch (e) { status = 'blocked'; }
+    if (!ok) missing.push(url);
+    var d = document.createElement('div'); d.className = 'f ' + (ok ? 'pass' : 'fail');
+    d.textContent = (ok ? '✓ ' : '✗ ') + url + (ok ? '' : '  (HTTP ' + status + ')');
+    filesEl.appendChild(d);
+  }
+  if (missing.length) { fail(missing.length + ' file(s) are missing at the addresses above. Upload them there, then reload.'); return; }
+  sum.textContent = 'Files OK. Starting tests…';
+  var started = Date.now();
+  setInterval(function () {
+    if (window.__DONE__) return;
+    var p = window.__PROGRESS__;
+    if (p && Date.now() - p.at > 20000) sum.innerHTML = '<b class="fail">Slow or hung on test ' + (p.i + 1) + ': ' + p.name.replace(/</g, '&lt;') + '</b><div class="ev">Waiting ' + Math.round((Date.now() - p.at) / 1000) + 's. It will be marked FAIL after 30s.</div>';
+  }, 2000);
+  try { await import('./tests.js?v=3'); } catch (e) { fail('Test script failed to load or crashed: ' + (e && e.message || e)); }
+})();
+</script>
+</body></html>
