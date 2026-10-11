@@ -11,7 +11,7 @@ h1{font-size:22px;margin:4px 0 10px}h2{font-size:17px;margin:0 0 8px}
 .btn.sec{background:transparent;color:var(--fg);border:1px solid var(--line)}
 .btn.danger{background:var(--bad);color:#fff}.btn.small{padding:8px 12px;font-size:14px}
 .btn:disabled{opacity:.5}
-.hidden{display:none}
+.hidden{display:none !important}
 .nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
 .nav a{flex:1;text-align:center;padding:14px 0;color:var(--mut);text-decoration:none;font-weight:600}
 .nav a.active{color:var(--fg);border-top:3px solid var(--fg);padding-top:11px}
